@@ -1,0 +1,22 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t gagrech/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run gagrech/react-test npm test -- --coverage
+
+after_success:
+  - docker build -t gagrech/multi-client ./client
+  - docker build -t gagrech/multi-nginx ./nginx
+  - docker build -t gagrech/multi-server ./server
+  - docker build -t gagrech/multi-worker ./worker
+  # Log in to the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take the production images and push them to docker hub
+  - docker push gagrech/multi-client
+  - docker push gagrech/multi-nginx
+  - docker push gagrech/multi-server
+  - docker push gagrech/multi-worker
